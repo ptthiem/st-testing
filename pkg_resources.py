@@ -1603,6 +1603,19 @@ class ZipProvider(EggProvider):
         EggProvider.__init__(self, module)
         self.zip_pre = self.loader.archive+os.sep
 
+    def _get(self, path):
+        assert path.startswith(self.zip_pre)
+        file_info = self.zipinfo[path[len(self.zip_pre):]]
+
+        zfile = zipfile.ZipFile(self.loader.archive, "r")
+        #Got ZipFile has no __exit__ on python 3.1
+        try:
+            return zfile.read(file_info) 
+        finally:
+            zfile.close()
+
+        return EggProvider._get(self, path)
+
     def _zipinfo_name(self, fspath):
         # Convert a virtual filename (full path to file) into a zipfile subpath
         # usable with the zipimport directory cache for our target archive
