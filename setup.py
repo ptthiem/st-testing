@@ -197,7 +197,7 @@ setup_params = dict(
         Topic :: Utilities
         """).strip().splitlines(),
     extras_require={
-        "ssl:sys_platform=='win32'": "wincertstore==0.2",
+        "ssl:sys_platform=='win32'": "wincertstore==0.1",
         "certs": "certifi==1.0.1",
     },
     dependency_links=[
