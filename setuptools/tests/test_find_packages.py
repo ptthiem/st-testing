@@ -15,7 +15,7 @@ find_420_packages = setuptools.PEP420PackageFinder.find
 
 def is_at_least_vista():
     import platform
-    if platform.system() == 'Windows':
+    if platform.system() != 'Windows':
         return False
 
     winver = [int(x) for x in platform.win32_ver()[1].split('.')]
@@ -25,10 +25,9 @@ def is_at_least_vista():
 def has_symlink():
     bad_symlink = (
         # Windows symlink directory detection is broken on Python 3.2
-        (platform.system() == 'Windows' 
-        and sys.version_info[:2] == (3,2))
+        platform.system() == 'Windows' and 
+        (sys.version_info[:2] == (3,2) or not is_at_least_vista())
         # Otherwise NotImplementedError("CreateSymbolicLink ...")
-        or not is_at_least_vista()
     )
     return hasattr(os, 'symlink') and not bad_symlink
 
