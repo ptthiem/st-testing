@@ -12,10 +12,23 @@ from setuptools.tests.py26compat import skipIf
 
 find_420_packages = setuptools.PEP420PackageFinder.find
 
+
+def is_at_least_vista():
+    import platform
+    if platform.system() == 'Windows':
+        return False
+
+    winver = [int(x) for x in platform.win32_ver()[1].split('.')]
+    return winver >= [6, 0]
+
+
 def has_symlink():
     bad_symlink = (
         # Windows symlink directory detection is broken on Python 3.2
-        platform.system() == 'Windows' and sys.version_info[:2] == (3,2)
+        (platform.system() == 'Windows' 
+        and sys.version_info[:2] == (3,2))
+        # Otherwise NotImplementedError("CreateSymbolicLink ...")
+        or not is_at_least_vista()
     )
     return hasattr(os, 'symlink') and not bad_symlink
 
