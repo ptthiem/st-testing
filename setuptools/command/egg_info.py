@@ -270,6 +270,33 @@ class manifest_maker(sdist):
         """
         self.filelist._repair()
 
+        #if files are byte codes they should be filesystem encoded
+        fs_enc = sys.getfilesystemencoding()
+        files = []
+        contents = []
+        for file in self.filelist.files:
+            #In order to ensure the encode behaves, must explicitly
+            #decode non-unicode strings, yet retain original for
+            #filelist cleanup
+            if not isinstance(file, unicode):
+                try:
+                    u_file = file.decode(fs_enc)
+                except UnicodeDecodeError:
+                    log.warn("'%s' in unexpected encoding -- skipping" % file)
+                    continue
+            else:
+                u_file = file
+
+            # The manifest must be UTF-8 encodable. See #303.
+            try:
+                u_file.encode("utf-8")
+            except UnicodeEncodeError:
+                log.warn("'%s' not UTF-8 encodable -- skipping" % file)
+            else:
+                files.append(file)  # possibily byte encoded
+                contents.append(u_file)  # unicode only
+        self.filelist.files = files
+
         files = [f.replace(os.sep, '/') for f in self.filelist.files]
         msg = "writing manifest file '%s'" % self.manifest
         self.execute(write_file, (self.manifest, files), msg)
@@ -307,8 +334,8 @@ def write_file(filename, contents):
 
     #assuming the contents has been vetted for utf-8 encoding
     contents = contents.encode("utf-8")
-    
-    with open(filename, "wb") as f:        # always write POSIX-style manifest
+
+    with open(filename, "wb") as f:  # always write POSIX-style manifest
         f.write(contents)
 
 
