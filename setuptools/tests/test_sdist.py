@@ -139,7 +139,7 @@ class TestSdistTest(unittest.TestCase):
         quiet()
         try:
             mm.run()
-            mm.filelist.files.append(filename)
+            mm.filelist.append(filename)
             mm.write_manifest()
         finally:
             unquiet()
