@@ -19,7 +19,7 @@ from setuptools.command.egg_info import manifest_maker
 from setuptools.dist import Distribution
 from setuptools import svn_utils
 
-SETUP_ATTRS = {
+SETUP_ATTRS={
     'name': 'sdist_test',
     'version': '0.0',
     'packages': ['sdist_test'],
@@ -27,39 +27,39 @@ SETUP_ATTRS = {
 }
 
 
-SETUP_PY = """\
+SETUP_PY="""\
 from setuptools import setup
 
 setup(**%r)
-""" % SETUP_ATTRS
+"""%SETUP_ATTRS
 
 
-if sys.version_info >= (3,):
-    LATIN1_FILENAME = 'smörbröd.py'.encode('latin-1')
+if sys.version_info>=(3,):
+    LATIN1_FILENAME='smörbröd.py'.encode('latin-1')
 else:
-    LATIN1_FILENAME = 'sm\xf6rbr\xf6d.py'
+    LATIN1_FILENAME='sm\xf6rbr\xf6d.py'
 
 
 # Cannot use context manager because of Python 2.4
 def quiet():
     global old_stdout, old_stderr
-    old_stdout, old_stderr = sys.stdout, sys.stderr
-    sys.stdout, sys.stderr = StringIO(), StringIO()
+    old_stdout, old_stderr=sys.stdout, sys.stderr
+    sys.stdout, sys.stderr=StringIO(), StringIO()
 
 def unquiet():
-    sys.stdout, sys.stderr = old_stdout, old_stderr
+    sys.stdout, sys.stderr=old_stdout, old_stderr
 
 
 # Fake byte literals for Python <= 2.5
 def b(s, encoding='utf-8'):
-    if sys.version_info >= (3,):
+    if sys.version_info>=(3,):
         return s.encode(encoding)
     return s
 
 
 # Convert to POSIX path
 def posix(path):
-    if sys.version_info >= (3,) and not isinstance(path, str):
+    if sys.version_info>=(3,) and not isinstance(path, str):
         return path.replace(os.sep.encode('ascii'), b('/'))
     else:
         return path.replace(os.sep, '/')
@@ -70,9 +70,9 @@ def decompose(path):
     if isinstance(path, unicode):
         return unicodedata.normalize('NFD', path)
     try:
-        path = path.decode('utf-8')
-        path = unicodedata.normalize('NFD', path)
-        path = path.encode('utf-8')
+        path=path.decode('utf-8')
+        path=unicodedata.normalize('NFD', path)
+        path=path.encode('utf-8')
     except UnicodeError:
         pass  # Not UTF-8
     return path
@@ -81,12 +81,12 @@ def decompose(path):
 class TestSdistTest(unittest.TestCase):
 
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
-        f = open(os.path.join(self.temp_dir, 'setup.py'), 'w')
+        self.temp_dir=tempfile.mkdtemp()
+        f=open(os.path.join(self.temp_dir, 'setup.py'), 'w')
         f.write(SETUP_PY)
         f.close()
         # Set up the rest of the test package
-        test_pkg = os.path.join(self.temp_dir, 'sdist_test')
+        test_pkg=os.path.join(self.temp_dir, 'sdist_test')
         os.mkdir(test_pkg)
         # *.rst was not included in package_data, so c.rst should not be
         # automatically added to the manifest when not under version control
@@ -94,7 +94,7 @@ class TestSdistTest(unittest.TestCase):
             # Just touch the files; their contents are irrelevant
             open(os.path.join(test_pkg, fname), 'w').close()
 
-        self.old_cwd = os.getcwd()
+        self.old_cwd=os.getcwd()
         os.chdir(self.temp_dir)
 
     def tearDown(self):
@@ -107,9 +107,9 @@ class TestSdistTest(unittest.TestCase):
         version control.
         """
 
-        dist = Distribution(SETUP_ATTRS)
-        dist.script_name = 'setup.py'
-        cmd = sdist(dist)
+        dist=Distribution(SETUP_ATTRS)
+        dist.script_name='setup.py'
+        cmd=sdist(dist)
         cmd.ensure_finalized()
 
         # squelch output
@@ -119,21 +119,21 @@ class TestSdistTest(unittest.TestCase):
         finally:
             unquiet()
 
-        manifest = cmd.filelist.files
+        manifest=cmd.filelist.files
         self.assertTrue(os.path.join('sdist_test', 'a.txt') in manifest)
         self.assertTrue(os.path.join('sdist_test', 'b.txt') in manifest)
         self.assertTrue(os.path.join('sdist_test', 'c.rst') not in manifest)
 
     def test_manifest_is_written_with_utf8_encoding(self):
         # Test for #303.
-        dist = Distribution(SETUP_ATTRS)
-        dist.script_name = 'setup.py'
-        mm = manifest_maker(dist)
-        mm.manifest = os.path.join('sdist_test.egg-info', 'SOURCES.txt')
+        dist=Distribution(SETUP_ATTRS)
+        dist.script_name='setup.py'
+        mm=manifest_maker(dist)
+        mm.manifest=os.path.join('sdist_test.egg-info', 'SOURCES.txt')
         os.mkdir('sdist_test.egg-info')
 
         # UTF-8 filename
-        filename = os.path.join('sdist_test', 'smörbröd.py')
+        filename=os.path.join('sdist_test', 'smörbröd.py')
 
         # Must create the file or it will get stripped.
         open(filename, 'w').close()
@@ -147,58 +147,61 @@ class TestSdistTest(unittest.TestCase):
         finally:
             unquiet()
 
-        manifest = open(mm.manifest, 'rbU')
-        contents = manifest.read()
+        manifest=open(mm.manifest, 'rbU')
+        contents=manifest.read()
         manifest.close()
 
         # The manifest should be UTF-8 encoded
         try:
-            u_contents = contents.decode('UTF-8')
+            u_contents=contents.decode('UTF-8')
         except UnicodeDecodeError:
-            e = sys.exc_info()[1]
+            e=sys.exc_info()[1]
             self.fail(e)
 
         # The manifest should contain the UTF-8 filename
-        if sys.version_info < (3,):
-            fs_enc = sys.getfilesystemencoding()
-            filename = filename.decode(fs_enc)
+        if sys.version_info<(3,):
+            fs_enc=sys.getfilesystemencoding()
+            filename=filename.decode(fs_enc)
 
         self.assertTrue(posix(filename) in u_contents)
 
     # Python 3 only
-    if sys.version_info >= (3,):
+    if sys.version_info>=(3,):
 
         def test_write_manifest_allows_utf8_filenames(self):
             # Test for #303.
-            dist = Distribution(SETUP_ATTRS)
-            dist.script_name = 'setup.py'
-            mm = manifest_maker(dist)
-            mm.manifest = os.path.join('sdist_test.egg-info', 'SOURCES.txt')
+            dist=Distribution(SETUP_ATTRS)
+            dist.script_name='setup.py'
+            mm=manifest_maker(dist)
+            mm.manifest=os.path.join('sdist_test.egg-info', 'SOURCES.txt')
             os.mkdir('sdist_test.egg-info')
 
             # UTF-8 filename
-            filename = os.path.join(b('sdist_test'), b('smörbröd.py'))
+            filename=os.path.join(b('sdist_test'), b('smörbröd.py'))
+
+            #Must touch the file or risk removal
+            open(filename, "w").close()
 
             # Add filename and write manifest
             quiet()
             try:
                 mm.run()
-                u_filename = filename.decode('utf-8')
-                mm.filelist.files.append(u_filename)
+                u_filename=filename.decode('utf-8')
+                mm.filelist.append(u_filename)
                 # Re-write manifest
                 mm.write_manifest()
             finally:
                 unquiet()
 
-            manifest = open(mm.manifest, 'rbU')
-            contents = manifest.read()
+            manifest=open(mm.manifest, 'rbU')
+            contents=manifest.read()
             manifest.close()
 
             # The manifest should be UTF-8 encoded
             try:
                 contents.decode('UTF-8')
             except UnicodeDecodeError:
-                e = sys.exc_info()[1]
+                e=sys.exc_info()[1]
                 self.fail(e)
 
             # The manifest should contain the UTF-8 filename
@@ -214,35 +217,35 @@ class TestSdistTest(unittest.TestCase):
             escapes) should be omitted from the manifest.
             See https://bitbucket.org/tarek/distribute/issue/303 for history.
             """
-            dist = Distribution(SETUP_ATTRS)
-            dist.script_name = 'setup.py'
-            mm = manifest_maker(dist)
-            mm.manifest = os.path.join('sdist_test.egg-info', 'SOURCES.txt')
+            dist=Distribution(SETUP_ATTRS)
+            dist.script_name='setup.py'
+            mm=manifest_maker(dist)
+            mm.manifest=os.path.join('sdist_test.egg-info', 'SOURCES.txt')
             os.mkdir('sdist_test.egg-info')
 
             # Latin-1 filename
-            filename = os.path.join(b('sdist_test'), LATIN1_FILENAME)
+            filename=os.path.join(b('sdist_test'), LATIN1_FILENAME)
 
             # Add filename with surrogates and write manifest
             quiet()
             try:
                 mm.run()
-                u_filename = filename.decode('utf-8', 'surrogateescape')
+                u_filename=filename.decode('utf-8', 'surrogateescape')
                 mm.filelist.append(u_filename)
                 # Re-write manifest
                 mm.write_manifest()
             finally:
                 unquiet()
 
-            manifest = open(mm.manifest, 'rbU')
-            contents = manifest.read()
+            manifest=open(mm.manifest, 'rbU')
+            contents=manifest.read()
             manifest.close()
 
             # The manifest should be UTF-8 encoded
             try:
                 contents.decode('UTF-8')
             except UnicodeDecodeError:
-                e = sys.exc_info()[1]
+                e=sys.exc_info()[1]
                 self.fail(e)
 
             # The Latin-1 filename should have been skipped
@@ -253,9 +256,9 @@ class TestSdistTest(unittest.TestCase):
 
     def test_manifest_is_read_with_utf8_encoding(self):
         # Test for #303.
-        dist = Distribution(SETUP_ATTRS)
-        dist.script_name = 'setup.py'
-        cmd = sdist(dist)
+        dist=Distribution(SETUP_ATTRS)
+        dist.script_name='setup.py'
+        cmd=sdist(dist)
         cmd.ensure_finalized()
 
         # Create manifest
@@ -266,17 +269,17 @@ class TestSdistTest(unittest.TestCase):
             unquiet()
 
         # Add UTF-8 filename to manifest
-        filename = os.path.join(b('sdist_test'), b('smörbröd.py'))
-        cmd.manifest = os.path.join('sdist_test.egg-info', 'SOURCES.txt')
-        manifest = open(cmd.manifest, 'ab')
-        manifest.write(b('\n') + filename)
+        filename=os.path.join(b('sdist_test'), b('smörbröd.py'))
+        cmd.manifest=os.path.join('sdist_test.egg-info', 'SOURCES.txt')
+        manifest=open(cmd.manifest, 'ab')
+        manifest.write(b('\n')+filename)
         manifest.close()
 
         # The file must exist to be included in the filelist
         open(filename, 'w').close()
 
         # Re-read manifest
-        cmd.filelist.files = []
+        cmd.filelist.files=[]
         quiet()
         try:
             cmd.read_manifest()
@@ -284,18 +287,18 @@ class TestSdistTest(unittest.TestCase):
             unquiet()
 
         # The filelist should contain the UTF-8 filename
-        if sys.version_info >= (3,):
-            filename = filename.decode('utf-8')
+        if sys.version_info>=(3,):
+            filename=filename.decode('utf-8')
         self.assertTrue(filename in cmd.filelist.files)
 
     # Python 3 only
-    if sys.version_info >= (3,):
+    if sys.version_info>=(3,):
 
         def test_read_manifest_skips_non_utf8_filenames(self):
             # Test for #303.
-            dist = Distribution(SETUP_ATTRS)
-            dist.script_name = 'setup.py'
-            cmd = sdist(dist)
+            dist=Distribution(SETUP_ATTRS)
+            dist.script_name='setup.py'
+            cmd=sdist(dist)
             cmd.ensure_finalized()
 
             # Create manifest
@@ -306,42 +309,42 @@ class TestSdistTest(unittest.TestCase):
                 unquiet()
 
             # Add Latin-1 filename to manifest
-            filename = os.path.join(b('sdist_test'), LATIN1_FILENAME)
-            cmd.manifest = os.path.join('sdist_test.egg-info', 'SOURCES.txt')
-            manifest = open(cmd.manifest, 'ab')
-            manifest.write(b('\n') + filename)
+            filename=os.path.join(b('sdist_test'), LATIN1_FILENAME)
+            cmd.manifest=os.path.join('sdist_test.egg-info', 'SOURCES.txt')
+            manifest=open(cmd.manifest, 'ab')
+            manifest.write(b('\n')+filename)
             manifest.close()
 
             # The file must exist to be included in the filelist
             open(filename, 'w').close()
 
             # Re-read manifest
-            cmd.filelist.files = []
+            cmd.filelist.files=[]
             quiet()
             try:
                 try:
                     cmd.read_manifest()
                 except UnicodeDecodeError:
-                    e = sys.exc_info()[1]
+                    e=sys.exc_info()[1]
                     self.fail(e)
             finally:
                 unquiet()
 
             # The Latin-1 filename should have been skipped
-            filename = filename.decode('latin-1')
+            filename=filename.decode('latin-1')
             self.assertFalse(filename in cmd.filelist.files)
 
-    @skipIf(sys.version_info >= (3,) and locale.getpreferredencoding() != 'UTF-8',
+    @skipIf(sys.version_info>=(3,) and locale.getpreferredencoding()!='UTF-8',
             'Unittest fails if locale is not utf-8 but the manifests is recorded correctly')
     def test_sdist_with_utf8_encoded_filename(self):
         # Test for #303.
-        dist = Distribution(SETUP_ATTRS)
-        dist.script_name = 'setup.py'
-        cmd = sdist(dist)
+        dist=Distribution(SETUP_ATTRS)
+        dist.script_name='setup.py'
+        cmd=sdist(dist)
         cmd.ensure_finalized()
 
         # UTF-8 filename
-        filename = os.path.join(b('sdist_test'), b('smörbröd.py'))
+        filename=os.path.join(b('sdist_test'), b('smörbröd.py'))
         open(filename, 'w').close()
 
         quiet()
@@ -350,35 +353,35 @@ class TestSdistTest(unittest.TestCase):
         finally:
             unquiet()
 
-        if sys.platform == 'darwin':
-            filename = decompose(filename)
+        if sys.platform=='darwin':
+            filename=decompose(filename)
 
-        if sys.version_info >= (3,):
-            fs_enc = sys.getfilesystemencoding()
+        if sys.version_info>=(3,):
+            fs_enc=sys.getfilesystemencoding()
 
-            if sys.platform == 'win32':
-                if fs_enc == 'cp1252':
+            if sys.platform=='win32':
+                if fs_enc=='cp1252':
                     # Python 3 mangles the UTF-8 filename
-                    filename = filename.decode('cp1252')
+                    filename=filename.decode('cp1252')
                     self.assertTrue(filename in cmd.filelist.files)
                 else:
-                    filename = filename.decode('mbcs')
+                    filename=filename.decode('mbcs')
                     self.assertTrue(filename in cmd.filelist.files)
             else:
-                filename = filename.decode('utf-8')
+                filename=filename.decode('utf-8')
                 self.assertTrue(filename in cmd.filelist.files)
         else:
             self.assertTrue(filename in cmd.filelist.files)
 
     def test_sdist_with_latin1_encoded_filename(self):
         # Test for #303.
-        dist = Distribution(SETUP_ATTRS)
-        dist.script_name = 'setup.py'
-        cmd = sdist(dist)
+        dist=Distribution(SETUP_ATTRS)
+        dist.script_name='setup.py'
+        cmd=sdist(dist)
         cmd.ensure_finalized()
 
         # Latin-1 filename
-        filename = os.path.join(b('sdist_test'), LATIN1_FILENAME)
+        filename=os.path.join(b('sdist_test'), LATIN1_FILENAME)
         open(filename, 'w').close()
         self.assertTrue(os.path.isfile(filename))
 
@@ -388,21 +391,21 @@ class TestSdistTest(unittest.TestCase):
         finally:
             unquiet()
 
-        if sys.version_info >= (3,):
+        if sys.version_info>=(3,):
             # not all windows systems have a default FS encoding of cp1252
-            if sys.platform == 'win32':
+            if sys.platform=='win32':
                 # Latin-1 is similar to Windows-1252 however
                 # on mbcs filesys it is not in latin-1 encoding
-                fs_enc = sys.getfilesystemencoding()
-                if fs_enc == 'mbcs':
-                    filename = filename.decode('mbcs')
+                fs_enc=sys.getfilesystemencoding()
+                if fs_enc=='mbcs':
+                    filename=filename.decode('mbcs')
                 else:
-                    filename = filename.decode('latin-1')
+                    filename=filename.decode('latin-1')
 
                 self.assertTrue(filename in cmd.filelist.files)
             else:
                 # The Latin-1 filename should have been skipped
-                filename = filename.decode('latin-1')
+                filename=filename.decode('latin-1')
                 self.assertFalse(filename in cmd.filelist.files)
         else:
             # Under Python 2 there seems to be no decoded string in the
@@ -411,7 +414,7 @@ class TestSdistTest(unittest.TestCase):
             try:
                 # fs_enc should match how one is expect the decoding to
                 # be proformed for the manifest output.
-                fs_enc = sys.getfilesystemencoding()
+                fs_enc=sys.getfilesystemencoding()
                 filename.decode(fs_enc)
                 self.assertTrue(filename in cmd.filelist.files)
             except UnicodeDecodeError:
@@ -420,24 +423,24 @@ class TestSdistTest(unittest.TestCase):
 class TestDummyOutput(environment.ZippedEnvironment):
 
     def setUp(self):
-        self.datafile = os.path.join('setuptools', 'tests',
+        self.datafile=os.path.join('setuptools', 'tests',
                                      'svn_data', "dummy.zip")
-        self.dataname = "dummy"
+        self.dataname="dummy"
         super(TestDummyOutput, self).setUp()
 
     def _run(self):
-        code, data = environment.run_setup_py(["sdist"],
+        code, data=environment.run_setup_py(["sdist"],
                                               pypath=self.old_cwd,
                                               data_stream=0)
         if code:
-            info = "DIR: " + os.path.abspath('.')
-            info += "\n  SDIST RETURNED: %i\n\n" % code
-            info += data
+            info="DIR: "+os.path.abspath('.')
+            info+="\n  SDIST RETURNED: %i\n\n"%code
+            info+=data
             raise AssertionError(info)
 
-        datalines = data.splitlines()
+        datalines=data.splitlines()
 
-        possible = (
+        possible=(
             "running sdist",
             "running egg_info",
             "creating dummy\.egg-info",
@@ -468,17 +471,17 @@ class TestDummyOutput(environment.ZippedEnvironment):
             "removing 'dummy-0\.1\.1' \\(and everything under it\\)",
         )
 
-        print("    DIR: " + os.path.abspath('.'))
+        print("    DIR: "+os.path.abspath('.'))
         for line in datalines:
-            found = False
+            found=False
             for pattern in possible:
                 if re.match(pattern, line):
-                    print("   READ: " + line)
-                    found = True
+                    print("   READ: "+line)
+                    found=True
                     break
             if not found:
                 raise AssertionError("Unexpexected: %s\n-in-\n%s"
-                                     % (line, data))
+                                     %(line, data))
 
         return data
 
@@ -489,36 +492,36 @@ class TestDummyOutput(environment.ZippedEnvironment):
 class TestSvn(environment.ZippedEnvironment):
 
     def setUp(self):
-        version = svn_utils.SvnInfo.get_svn_version()
+        version=svn_utils.SvnInfo.get_svn_version()
         if not version:  # None or Empty
             return
 
-        self.base_version = tuple([int(x) for x in version.split('.')][:2])
+        self.base_version=tuple([int(x) for x in version.split('.')][:2])
 
         if not self.base_version:
             raise ValueError('No SVN tools installed')
-        elif self.base_version < (1, 3):
-            raise ValueError('Insufficient SVN Version %s' % version)
-        elif self.base_version >= (1, 9):
+        elif self.base_version<(1, 3):
+            raise ValueError('Insufficient SVN Version %s'%version)
+        elif self.base_version>=(1, 9):
             # trying the latest version
-            self.base_version = (1, 8)
+            self.base_version=(1, 8)
 
-        self.dataname = "svn%i%i_example" % self.base_version
-        self.datafile = os.path.join('setuptools', 'tests',
-                                     'svn_data', self.dataname + ".zip")
+        self.dataname="svn%i%i_example"%self.base_version
+        self.datafile=os.path.join('setuptools', 'tests',
+                                     'svn_data', self.dataname+".zip")
         super(TestSvn, self).setUp()
 
     @skipIf(not test_svn._svn_check, "No SVN to text, in the first place")
     def test_walksvn(self):
-        if self.base_version >= (1, 6):
-            folder2 = 'third party2'
-            folder3 = 'third party3'
+        if self.base_version>=(1, 6):
+            folder2='third party2'
+            folder3='third party3'
         else:
-            folder2 = 'third_party2'
-            folder3 = 'third_party3'
+            folder2='third_party2'
+            folder3='third_party3'
 
         # TODO is this right
-        expected = set([
+        expected=set([
             os.path.join('a file'),
             os.path.join(folder2, 'Changes.txt'),
             os.path.join(folder2, 'MD5SUMS'),
