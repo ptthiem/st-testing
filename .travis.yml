@@ -12,4 +12,5 @@ script:
  - python -c "import sys; sys.stderr.write('%x\n%s' % (sys.maxsize, sys.maxsize > 2**32))"
  - python setup.py test
  - python setup.py ptr
+ - python setup.py install
  - python ez_setup.py --version 3.5.1
