@@ -8,6 +8,7 @@ python:
   - pypy
 # command to run tests
 script:
+ - python -c "import sys; sys.stderr.write(sys.version)"
  - python setup.py test
  - python setup.py ptr
  - python ez_setup.py --version 3.5.1
